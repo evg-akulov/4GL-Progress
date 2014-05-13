@@ -1,0 +1,85 @@
+/*
+               Банковская интегрированная система БИСквит
+    Copyright: (C) 1992-2006 ЗАО "Банковские информационные системы"
+     Filename: ved-subs.def
+      Comment: (0072887) Временные таблицы для справки-уведомления об остатке 
+                  ссудной задолженности и  о начисленных и уплаченных процентах
+   Parameters:
+         Uses:
+      Used by:
+      Created: 22.01.2007  Ariz
+*/
+
+DEF TEMP-TABLE RepInfo NO-UNDO      /* временная таблица, для печати данных по договору */
+   FIELD cont-code   AS CHARACTER
+   FIELD doc-num     AS CHARACTER
+   FIELD currency    AS CHARACTER
+   FIELD cust-cat    AS CHARACTER
+   FIELD cust-id     AS INTEGER
+   FIELD ClientName  AS CHARACTER   /* Наименование заемщика */
+   FIELD ClientINN   AS CHARACTER   /* ИНН заемщика */
+   FIELD ClientAcct  AS CHARACTER   /* р/сч. заемщика */
+   FIELD ClientOKVED AS CHAR        /* Род деятельности заемщика по ОКВЭД  */
+   FIELD open-date   AS DATE
+   FIELD acct        AS CHARACTER   /* Счет заемщика */
+   FIELD datenum     AS CHARACTER   /* Дата и номер кредитного договора (для отображения в одном поле) */
+   FIELD rat-ref     AS DECIMAL     /* Ставка рефенансирования */
+   FIELD rat-cred    AS DECIMAL     /* Процентная ставка по кредиту */
+
+   FIELD cred-date   AS DATE        /* Дата выдачи кредита */
+   FIELD purpose     AS CHARACTER   /* Цель кредита */
+   FIELD plan-date   AS CHARACTER   /* срок погашения кредита (дата планового погашения основного долга) */
+   FIELD cred-summ   AS DECIMAL     /* Сумма выданного кредита */
+   FIELD addr        AS CHARACTER   /* Адрес постоянной регистрации */
+   /* FIELD pasp-seria  AS CHARACTER   /* Паспорт серия */ */
+   /* FIELD pasp-num    AS CHARACTER   /* Паспорт номер */ */
+   /* FIELD pasp-wh     AS CHARACTER   /* Паспорт: Кем и когда выдан */ */
+   /* FIELD tel-wrk     AS CHARACTER   /* Рабочий телефон */ */
+   /* FIELD tel-home    AS CHARACTER   /* Домашинй телефон */ */
+   FIELD subsmin-ch  AS CHARACTER   /* Размер предоставляемой субсидии (минимум из грф. 3 и 4) прописью */
+   FIELD nn          AS INTEGER     /*  № п/п  */
+   FIELD begdateclc  AS DATE        /* Дата начала всего периода по договору */
+   FIELD enddateclc  AS DATE        /* Дата окончания всего периода по договору */
+   FIELD itog_summ_opl AS DECIMAL     /* Итоги */
+   FIELD itog_subs1    AS DECIMAL     /* Итоги */
+   FIELD itog_subs2    AS DECIMAL     /* Итоги */
+   FIELD itog_subs3    AS DECIMAL     /* Итоги */
+   FIELD itog_subs4    AS DECIMAL     /* Итоги */
+   FIELD itog_subs-min AS DECIMAL     /* Итоги */
+   FIELD rate-cur      AS DECIMAL     /* курс валюты */
+   FIELD Raion         AS CHARACTER
+.
+
+DEF TEMP-TABLE LoanInfo NO-UNDO     /* временная таблица, для печати данных по оплате процентов */
+   FIELD cont-code   AS CHARACTER
+   FIELD bal-summ    AS DECIMAL     /* Остаток ссудной задолженности */
+   FIELD beg-date    AS DATE
+   FIELD end-date    AS DATE
+   FIELD ndays       AS INT64     /* Кол-во дней пользования */
+   FIELD rat-cred    AS DECIMAL     /* Процентная ставка по кредиту (на период) */
+   FIELD rat1        AS DECIMAL     /* Ставка начисленных процентов */
+   FIELD summ_pr     AS DECIMAL
+   FIELD summ_opl    AS DECIMAL     /* Сумма уплаченных процентов */
+   FIELD comment     AS CHARACTER
+   FIELD subs1       AS DECIMAL     /* Размер субсидии (кол. 11) */
+   FIELD subs2       AS DECIMAL     /* Размер субсидии (кол. 12) */
+   FIELD subs3       AS DECIMAL     /* Размер субсидии (кол. 15) */
+   FIELD subs4       AS DECIMAL     /* Размер субсидии (кол. 16) */
+   FIELD subs-min    AS DECIMAL     /* Сумма субсидии к оплате */
+   FIELD begdateclc  AS DATE        /* начало периода расчета */
+   FIELD enddateclc  AS DATE        /* конец периода расчета */
+   FIELD Raion       AS CHARACTER
+.
+
+DEF TEMP-TABLE ErrInfo NO-UNDO      /* протокол ошибок */
+   FIELD dog-num  AS CHAR
+   FIELD mess     AS CHAR
+   FIELD number   AS INT64
+.
+
+DEF TEMP-TABLE tmprecs LIKE tmprecid. /* Аналог tmprecid.
+                                      ** Т.к. удовлетворяющий требованиям пересчет договора это 
+                                      ** l-calc2.p (отключение вывода сообщений и проч.), а в нем 
+                                      ** чистится tmprecid, то будем копировать во временную табличку */
+
+

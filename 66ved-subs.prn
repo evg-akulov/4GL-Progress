@@ -1,0 +1,233 @@
+/*
+               Банковская интегрированная система БИСквит
+    Copyright: (C) 1992-2006 ЗАО "Банковские информационные системы"
+     Filename: ved-subs.prn
+      Comment: (0072887) Процедуры печати для справки-уведомления об остатке 
+                  ссудной задолженности и  о начисленных и уплаченных процентах
+   Parameters:
+         Uses:
+      Used by:
+      Created: 22.01.2007  Ariz
+*/
+
+/* Процедура печати Формы 1 */
+PROCEDURE PrintForm1.
+
+   PUT UNFORMATTED
+      "                                      Справка-уведомление" SKIP                                           
+      "                               об остатке ссудной задолженности и" SKIP.
+   IF mADelay THEN
+      PUT UNFORMATTED
+         "             о начисленных и уплаченных процентах по " mOpEndDate FORMAT "99.99.9999" " г." SKIP.
+   ELSE
+      PUT UNFORMATTED
+         "             о начисленных и уплаченных процентах за период с " mOpBegDate FORMAT "99.99.9999" " г.  по " mOpEndDate FORMAT "99.99.9999" " г." SKIP.
+   PUT UNFORMATTED
+      "                                                              ──────────────    ──────────────" SKIP
+      "                               " name-bank SKIP
+      "                             ───────────────────────────────────────" SKIP
+      "                                      (наименование банка)" SKIP
+      "БИК " STRING(mBankBIK,"X(34)") "  Кор. счет " 
+             STRING(mCorrAcct,"X(28)")                                                 SKIP
+      "    ──────────────────────────────────            ────────────────────────────" SKIP(2)
+      "Форма 1" SKIP
+
+      "┌──────┬──────────────────────┬───────────────────────────┬──────────────────────┬───────────────────┬────────────┬─────────────────────┬─────────────┬────────────────┬─────────────┬────────────┬────────────┐" SKIP
+      "│ №п/п │ Наименование         │ Дата и номер кредитного   │ Счет заемщика,       │ Остаток ссудной   │ Процентная │ Ставка              │ Сумма       │ Сумма          │ Кол-во дней │   Начало   │   Конец    │" SKIP
+      "│      │ заемщика (ф.и.о.),   │ договора                  │ открытый им          │ задолженности,    │ ставка     │ рефинансирования    │ начисленных │ уплаченных     │ пользования │   периода  │   периода  │" SKIP
+      "│      │ ИНН                  │                           │ в банке              │ исходя из которой │ по кредиту │ Банка России на     │ процентов   │ процентов      │ кредитом    │            │            │" SKIP
+      "│      │                      │                           │ для перечисления     │ начисляется       │            │ дату заключения     │             │ (рубли)        │ в расчетном │            │            │" SKIP
+      "│      │                      │                           │ целевых средств      │ размер целевых    │            │ кредитного договора │             │                │ периоде     │            │            │" SKIP
+      "│      │                      │                           │                      │ средств (рубли)   │            │                     │             │                │             │            │            │" SKIP
+      "├──────┼──────────────────────┼───────────────────────────┼──────────────────────┼───────────────────┼────────────┼─────────────────────┼─────────────┼────────────────┼─────────────┼────────────┼────────────┤" SKIP
+      "│   1  │          2           │             3             │           4          │         5         │     6      │          7          │      8      │        9       │      10     │     11     │     12     │" SKIP
+      "├──────┼──────────────────────┼───────────────────────────┼──────────────────────┼───────────────────┼────────────┼─────────────────────┼─────────────┼────────────────┼─────────────┼────────────┼────────────┤" SKIP.
+                                                               
+   
+   FOR EACH RepInfo,
+       EACH LoanInfo WHERE 
+            LoanInfo.cont-code         EQ RepInfo.cont-code 
+        AND ENTRY(1, LoanInfo.comment) EQ "Основные проценты" 
+       BREAK BY RepInfo.nn
+   WITH FRAME Form1 NO-LABEL:
+
+      vMes[1] = RepInfo.ClientName.
+      {wordwrap.i 
+          &s = vMes 
+          &n = 5 
+          &l = 20
+       }
+      vMesDN[1] = RepInfo.datenum.
+      {wordwrap.i 
+          &s = vMesDN 
+          &n = 5 
+          &l = 25
+       }
+
+      ASSIGN
+         vKolvo   = 0
+         vKolvoDn = 0
+      .
+
+      DO i = 1 TO 5:
+         IF vMes[i] NE "" THEN
+            vKolvo = vKolvo + 1 .
+         IF vMesDn[i] NE "" THEN
+            vKolvoDn = vKolvoDn + 1 .
+      END.
+
+      IF FIRST-OF(RepInfo.nn) THEN
+      DO:
+         vStrNum = 1.
+         DISPLAY
+            RepInfo.nn
+            vMes[vStrNum] @ RepInfo.ClientName
+            vMesDn[vStrNum] @ RepInfo.datenum
+            RepInfo.acct
+            LoanInfo.bal-summ
+            LoanInfo.rat-cred
+            RepInfo.rat-ref
+            LoanInfo.rat1
+            LoanInfo.summ_pr
+            LoanInfo.ndays
+            LoanInfo.beg-date
+            LoanInfo.end-date
+         .
+      END.
+      ELSE
+      DO:
+         vStrNum = vStrNum + 1.
+         IF vStrNum LE 5 THEN
+         DISPLAY
+            vMes[vStrNum] @ RepInfo.ClientName
+            vMesDn[vStrNum] @ RepInfo.datenum.
+         DISPLAY
+            LoanInfo.bal-summ
+            LoanInfo.rat-cred
+            RepInfo.rat-ref
+            LoanInfo.rat1
+            LoanInfo.summ_pr
+            LoanInfo.ndays
+            LoanInfo.beg-date
+            LoanInfo.end-date
+         .
+      END.
+      
+      DOWN.
+      
+      IF LAST-OF(RepInfo.nn) AND ( vStrNum < vKolvo OR vStrNum < vKolvoDn ) THEN
+      DO i = vStrNum + 1 TO 5:
+         vStrNum = vStrNum + 1.
+         IF vMes[i] EQ "" AND vMesDn[i] EQ "" THEN LEAVE.
+         DISPLAY
+            vMes[i]   @ RepInfo.ClientName
+            vMesdn[i] @ RepInfo.datenum
+         .
+         DOWN.
+      END.
+      
+      IF LAST-OF(RepInfo.nn) AND vStrNum >= vKolvo AND vStrNum >= vKolvoDn THEN DO:
+         PUT UNFORMATTED
+            "│      ├──────────────────────┴───────────────────────────┴──────────────────────┴───────────────────┴────────────┴─────────────────────┴─────────────┼────────────────┼─────────────┼────────────┼────────────┤" SKIP
+            "│      │                                                                                                                           Итого по договору: │" repinfo.itog_summ_opl AT 153 FORMAT ">>>,>>>,>>9.99" " │             │            │            │" SKIP
+            "├──────┼──────────────────────┬───────────────────────────┬──────────────────────┬───────────────────┬────────────┬─────────────────────┬─────────────┼────────────────┼─────────────┼────────────┼────────────┤" SKIP.
+         DOWN.                                                                                                                                       
+      END.
+   END.
+
+   PUT UNFORMATTED
+      "│      │ Всего:               │                           │                      │                   │            │                     │             │" vTotal9 AT 153 FORMAT ">>>,>>>,>>9.99" " │             │            │            │" SKIP 
+      "└──────┴──────────────────────┴───────────────────────────┴──────────────────────┴───────────────────┴────────────┴─────────────────────┴─────────────┴────────────────┴─────────────┴────────────┴────────────┘" SKIP(1).
+
+
+   PUT UNFORMATTED
+      "Проценты, начисленные в соответствии с заключенным кредитными договорами, уплачены своевременно и в полном объеме." SKIP
+      "Суммы основного долга по кредитам уплачены в соответствии с графиками погашения кредитов своевременно и в полном объеме." SKIP(2)
+      "Главный бухгалтер                               " mBankBuch SKIP
+      "                         ────────────────────  ──────────────────────────────" SKIP
+      "                          (подпись)                  (ф.и.о.)" SKIP
+      "Руководитель банка (филиала)                    " mBankRuk SKIP
+      "                         ────────────────────  ──────────────────────────────" SKIP
+      "                          (подпись)                  (ф.и.о.)" SKIP(3)
+      "М.П." SKIP(3).
+
+   RETURN.
+END PROCEDURE.
+
+
+/* Процедура печати Формы 2 */
+PROCEDURE PrintForm2.
+
+   PUT UNFORMATTED "№ п/п;Наименование заемщика(ф.и.о.);ИНН;Дата;Номер договора;Счет заемщика;Остаток ссудной зад.;Процентная ст.;Ставка реф.;Сумма нач.%;Сумма уплач.%;Кол-во дней польз.;Начало пер.;Конец пер.;Район;" SKIP.
+
+   FOR EACH RepInfo,
+       EACH LoanInfo WHERE 
+            LoanInfo.cont-code         EQ RepInfo.cont-code 
+        AND ENTRY(1, LoanInfo.comment) EQ "Основные проценты" 
+       BREAK BY RepInfo.nn
+   WITH FRAME Form2 NO-LABEL:
+
+   PUT UNFORMATTED RepInfo.nn  ";".
+   PUT UNFORMATTED RepInfo.ClientName   ";".
+   PUT UNFORMATTED RepInfo.datenum   ";".
+   PUT UNFORMATTED RepInfo.acct   ";".
+   PUT UNFORMATTED LoanInfo.bal-summ FORMAT ">>,>>>,>>>,>>9.99" ";".
+   PUT UNFORMATTED LoanInfo.rat-cred FORMAT ">>9.99" ";".
+   PUT UNFORMATTED RepInfo.rat-ref FORMAT ">>9.99" ";".
+   PUT UNFORMATTED LoanInfo.rat1 FORMAT " >>>,>>9.99" ";".
+   PUT UNFORMATTED LoanInfo.summ_pr FORMAT ">>>,>>>,>>9.99" ";".
+   PUT UNFORMATTED LoanInfo.ndays  ";".
+   PUT UNFORMATTED LoanInfo.beg-date  ";".
+   PUT UNFORMATTED LoanInfo.end-date  ";".
+   PUT UNFORMATTED LoanInfo.Raion  ";" SKIP.
+      DOWN.
+   END.
+
+
+/*   PUT UNFORMATTED
+      "Проценты, начисленные в соответствии с заключенным кредитными договорами, уплачены своевременно и в полном объеме." SKIP
+      "Суммы основного долга по кредитам уплачены в соответствии с графиками погашения кредитов своевременно и в полном объеме." SKIP(2)
+      "Главный бухгалтер                               " mBankBuch SKIP
+      "                         ────────────────────  ──────────────────────────────" SKIP
+      "                          (подпись)                  (ф.и.о.)" SKIP
+      "Руководитель банка (филиала)                    " mBankRuk SKIP
+      "                         ────────────────────  ──────────────────────────────" SKIP
+      "                          (подпись)                  (ф.и.о.)" SKIP(3)
+      "М.П." SKIP(3).*/
+      
+   RETURN.
+END PROCEDURE.
+
+/* Протокол ошибок */
+PROCEDURE PrintError.
+        
+   PUT UNFORMATTED 
+      "                                      Протокол расчета субсидий" SKIP
+      "                   (протокол ошибок, выявленных в ходе формирования отчетной формы)" SKIP(2).
+   IF mADelay THEN
+      PUT UNFORMATTED
+         "Период расчета: по " mOpEndDate SKIP.
+   ELSE
+      PUT UNFORMATTED
+         "Период расчета: с " mOpBegDate " по " mOpEndDate SKIP.
+   PUT UNFORMATTED
+      "┌──────┬───────────────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐" SKIP
+      "│ №п/п │    Номер кредитного       │                           Информация об ошибке                                                                 │" SKIP
+      "│      │        договора           │                                                                                                                │" SKIP
+      "├──────┼───────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤" SKIP.
+
+   FOR EACH errinfo NO-LOCK
+       WITH FRAME Form3 NO-BOX :
+       DISPLAY
+          errinfo.number
+          errinfo.dog-num
+          errinfo.mess
+       .
+       DOWN.
+   END.
+
+   PUT UNFORMATTED
+      "└──────┴───────────────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘" SKIP.
+
+   RETURN.
+END PROCEDURE.
